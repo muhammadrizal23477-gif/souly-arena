@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Souly Arena</title>
+<style>
+  :root{
+    --radius-lg: 22px;
+    --radius-md: 14px;
+    --ease: cubic-bezier(.22,1,.36,1);
+    --accent: #6ee7ff;
+    --accent2: #a78bfa;
+    --gold: #fbbf24;
+    --danger: #fb7185;
+    --good: #34d399;
+  }
+  html[data-theme="dark"]{
+    --bg1:#0b1020; --bg2:#1b1440; --bg3:#0b3b4a; --bg4:#050810;
+    --glass-bg: rgba(255,255,255,0.08);
+    --glass-bg-strong: rgba(255,255,255,0.16);
+    --glass-border: rgba(255,255,255,0.16);
+    --text: #f4f6ff;
+    --text-dim: rgba(244,246,255,0.62);
+    --shadow: 0 10px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.10);
+    --input-bg: rgba(255,255,255,0.06);
+    --blob-opacity: .5;
+  }
+  html[data-theme="light"]{
+    --bg1:#eef2ff; --bg2:#dbeafe; --bg3:#cffafe; --bg4:#f5f3ff;
+    --glass-bg: rgba(255,255,255,0.55);
+    --glass-bg-strong: rgba(255,255,255,0.75);
+    --glass-border: rgba(15,23,42,0.10);
+    --text: #0f172a;
+    --text-dim: rgba(15,23,42,0.60);
+    --shadow: 0 10px 34px rgba(30,41,59,0.14), inset 0 1px 0 rgba(255,255,255,0.6);
+    --input-bg: rgba(15,23,42,0.045);
+    --blob-opacity: .35;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+    background: linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 35%,var(--bg3) 70%,var(--bg4) 100%);
+    background-size:200% 200%;
+    animation: bgshift 22s ease infinite;
+    position:relative;
+    transition: color .35s var(--ease);
+  }
+  @keyframes bgshift{
+    0%,100%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+  }
+  .blob{
+    position:fixed; border-radius:50%; filter:blur(70px); opacity:var(--blob-opacity); z-index:0;
+    animation: float 18s ease-in-out infinite;
+    transition: opacity .35s var(--ease);
+  }
+  .blob1{width:360px;height:360px; background:var(--accent2); top:-90px; left:-90px;}
+  .blob2{width:320px;height:320px; background:var(--accent); bottom:-70px; right:-70px; animation-delay:-6s;}
+  .blob3{width:280px;height:280px; background:#f472b6; top:38%; left:58%; animation-delay:-12s;}
+  @keyframes float{
+    0%,100%{transform:translate(0,0) scale(1);}
+    50%{transform:translate(34px,-34px) scale(1.1);}
+  }
+  .app{position:relative; z-index:1; max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;}
+
+  @keyframes fadeInUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+  @keyframes popIn{ from{opacity:0; transform:scale(.7);} to{opacity:1; transform:scale(1);} }
+
+  .glass{
+    background:var(--glass-bg);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    transition: background .35s var(--ease), border-color .35s var(--ease), box-shadow .35s var(--ease), transform .18s var(--ease);
+  }
+  .glass-strong{ background:var(--glass-bg-strong); }
+  .screen{ padding:20px 16px 90px; flex:1; animation: fadeIn .35s var(--ease); }
+  h1,h2,h3{margin:0 0 8px; letter-spacing:-0.01em;}
+  p{margin:0 0 8px; color:var(--text-dim); font-size:14px; line-height:1.5;}
+  .center{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
+  .logo{ text-align:center; font-size:40px; margin-bottom:4px; animation: popIn .5s var(--ease); }
+  .brand{ text-align:center; font-size:25px; font-weight:800; letter-spacing:0.5px; margin-bottom:2px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .tagline{text-align:center; margin-bottom:22px;}
+  input{
+    width:100%; padding:13px 14px; margin-bottom:12px; border-radius:var(--radius-md);
+    border:1px solid var(--glass-border); background:var(--input-bg); color:var(--text);
+    font-size:15px; outline:none; transition:border-color .2s var(--ease), background .3s var(--ease), box-shadow .2s var(--ease);
+  }
+  input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(110,231,255,0.18); }
+  input::placeholder{color:var(--text-dim);}
+  button{
+    cursor:pointer; border:none; border-radius:var(--radius-md); font-weight:700; font-size:15px;
+    padding:13px 16px; color:#0f172a; transition:transform .15s var(--ease), opacity .12s ease, box-shadow .2s var(--ease), filter .2s ease;
+  }
+  button:active{transform:scale(0.95);}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  .btn-primary{ width:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); box-shadow:0 6px 20px rgba(110,231,255,0.25); }
+  .btn-primary:hover{ filter:brightness(1.06); }
+  .btn-ghost{ width:100%; background:transparent; color:var(--text); border:1px solid var(--glass-border); }
+  .btn-small{ padding:8px 14px; font-size:13px; }
+  .link{ text-align:center; margin-top:10px; color:var(--accent); font-size:14px; cursor:pointer; font-weight:600; }
+  .err{ color:var(--danger); font-size:13px; margin:-4px 0 10px; min-height:16px; animation: fadeIn .2s ease; }
+  .msg{ color:var(--good); font-size:13px; margin:-4px 0 10px; min-height:16px; }
+
+  .topbar{ position:sticky; top:0; z-index:5; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; animation: fadeInUp .4s var(--ease); }
+  .avatar{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:19px; background:var(--glass-bg-strong); box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+  .hstat{ display:flex; gap:8px; align-items:center; font-size:13px; font-weight:700;}
+  .pill{ display:flex; align-items:center; gap:5px; padding:6px 10px; border-radius:999px; transition: transform .2s var(--ease); }
+  .pill.bump{ animation: bump .35s var(--ease); }
+  @keyframes bump{ 0%{transform:scale(1);} 40%{transform:scale(1.25);} 100%{transform:scale(1);} }
+  .theme-toggle{ width:34px; height:34px; border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; background:var(--glass-bg-strong); color:var(--text); border:1px solid var(--glass-border); }
+
+  .card{ padding:16px; margin-bottom:14px; animation: fadeInUp .4s var(--ease); }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .menu-card{ padding:22px 14px; text-align:center; cursor:pointer; animation: fadeInUp .45s var(--ease) backwards; }
+  .menu-card:nth-child(1){ animation-delay:.02s; }
+  .menu-card:nth-child(2){ animation-delay:.08s; }
+  .menu-card:nth-child(3){ animation-delay:.14s; }
+  .menu-card:nth-child(4){ animation-delay:.2s; }
+  .menu-card:active{ transform:scale(0.96); }
+  .menu-card .ico{ font-size:32px; margin-bottom:6px; filter:drop-shadow(0 4px 10px rgba(0,0,0,0.2)); }
+  .menu-card .lvl{ font-size:11px; color:var(--text-dim); margin-top:4px; }
+
+  .xpbar-track{ height:10px; border-radius:999px; background:var(--input-bg); overflow:hidden; margin:6px 0 4px; position:relative; }
+  .xpbar-fill{ height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:999px; transition: width .6s var(--ease); position:relative; overflow:hidden; }
+  .xpbar-fill::after{
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+    width:40%; animation: shimmer 2s linear infinite;
+  }
+  @keyframes shimmer{ 0%{transform:translateX(-120%);} 100%{transform:translateX(320%);} }
+
+  .bottomnav{
+    position:fixed; bottom:14px; left:50%; transform:translateX(-50%); width:min(440px,92%);
+    display:flex; justify-content:space-around; padding:10px 6px; z-index:10;
+    animation: fadeInUp .4s var(--ease);
+  }
+  .navbtn{ background:none; border:none; color:var(--text-dim); font-size:11px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 10px; border-radius:12px; transition: background .2s var(--ease), color .2s var(--ease), transform .15s var(--ease); }
+  .navbtn.active{ color:var(--text); background:var(--glass-bg-strong); transform:translateY(-3px); }
+  .navbtn .ni{ font-size:19px; transition: transform .2s var(--ease); }
+  .navbtn.active .ni{ transform:scale(1.15); }
+
+  .board{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0; }
+  .cell{ aspect-ratio:1; border-radius:var(--radius-md); background:var(--input-bg); border:1px solid var(--glass-border);
+    display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:800; cursor:pointer;
+    transition: background .2s var(--ease), transform .15s var(--ease); }
+  .cell:hover{ background:var(--glass-bg-strong); }
+  .cell.x, .cell.o{ animation: popIn .25s var(--ease); }
+  .cell.x{ color:var(--accent); }
+  .cell.o{ color:#f472b6; }
+  .cell:active{ transform:scale(0.93); }
+
+  .qopt{ width:100%; text-align:left; margin-bottom:10px; background:var(--input-bg); color:var(--text); border:1px solid var(--glass-border); animation: fadeInUp .3s var(--ease) backwards; }
+  .qopt:nth-child(1){animation-delay:0s;} .qopt:nth-child(2){animation-delay:.05s;} .qopt:nth-child(3){animation-delay:.1s;} .qopt:nth-child(4){animation-delay:.15s;}
+  .qopt.correct{ background:rgba(52,211,153,0.3); border-color:var(--good); animation:popIn .3s var(--ease); }
+  .qopt.wrong{ background:rgba(251,113,133,0.3); border-color:var(--danger); animation:shake .35s var(--ease); }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);} }
+
+  .chatlog{ height:46vh; overflow-y:auto; padding:6px 2px; display:flex; flex-direction:column; gap:8px; }
+  .bubble{ padding:10px 13px; border-radius:16px; max-width:82%; font-size:14px; line-height:1.4; animation: fadeInUp .25s var(--ease); }
+  .bubble.me{ align-self:flex-end; background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#0f172a; font-weight:600;}
+  .bubble.ai{ align-self:flex-start; background:var(--input-bg); border:1px solid var(--glass-border); }
+  .chatrow{ display:flex; gap:8px; margin-top:10px; }
+  .chatrow input{ margin:0; flex:1; }
+
+  .shopitem{ display:flex; align-items:center; justify-content:space-between; padding:14px; margin-bottom:10px; animation: fadeInUp .4s var(--ease); transition: transform .18s var(--ease); }
+  .shopitem:hover{ transform:translateY(-2px); }
+  .toast{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-14px); z-index:50; padding:11px 20px;
+    border-radius:14px; font-size:13px; font-weight:700; opacity:0; pointer-events:none;
+    transition:opacity .3s var(--ease), transform .3s var(--ease); box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(10px); }
+  .hidden{ display:none !important; }
+  .small{ font-size:12px; color:var(--text-dim); }
+  .row{ display:flex; align-items:center; justify-content:space-between; }
+  .emoji-pick{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+  .emoji-pick span{ font-size:24px; padding:8px; border-radius:12px; background:var(--input-bg); cursor:pointer; transition: transform .15s var(--ease), background .2s var(--ease); display:inline-block; }
+  .emoji-pick span:hover{ transform:scale(1.12); }
+  .emoji-pick span.sel{ background:var(--accent2); transform:scale(1.1); }
+  .spinner{ width:16px;height:16px;border-radius:50%;border:2px solid rgba(120,120,120,0.3); border-top-color:currentColor; animation:spin .7s linear infinite; display:inline-block;}
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+</style>
+</head>
+<body>
+<div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div>
+<div id="toast" class="toast glass-strong"></div>
+<div class="app" id="app"></div>
+
+<script>
+/* ===================== TEMA (dark / light) ===================== */
+let THEME = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', THEME);
+}
+function toggleTheme(){
+  THEME = THEME === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  const icons = document.querySelectorAll('.theme-toggle');
+  icons.forEach(b=> b.textContent = THEME==='dark' ? '☀️' : '🌙');
+}
+applyTheme();
+
+/* ===================== STORAGE / DATA LAYER ===================== */
+const AVATARS = ['🦊','🐼','🐸','🐯','🐰','🐨','🦁','🐵','🐧','🦄','🐙','🐳'];
+const XP_BASE = 100, XP_STEP = 22, MAX_LEVEL = 99;
+const AI_DAILY_BASE = 5;
+const BULB_COST = 30;
+
+function xpNeeded(level){ return XP_BASE + (level-1)*XP_STEP; }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function showToast(text, kind){
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.style.background = kind==='err' ? 'rgba(251,113,133,0.92)' : kind==='gold' ? 'rgba(251,191,36,0.95)' : 'rgba(52,211,153,0.92)';
+  t.style.color = '#0f172a';
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* Lapisan penyimpanan tahan-gagal: pakai window.storage kalau tersedia,
+   dan otomatis jatuh ke penyimpanan sementara di memori kalau tidak
+   tersedia / gagal, supaya login tetap bisa dipakai (walau saat itu
+   tidak permanen) daripada gagal total tanpa penjelasan. */
+const memoryStore = {};
+let storageOK = true;
+
+async function storeGet(key, shared){
+  if(typeof window.storage !== 'undefined'){
+    try{
+      const r = await window.storage.get(key, shared);
+      if(r && typeof r.value === 'string') return r.value;
+      return null;
+    }catch(e){
+      // Kunci belum ada -> normal, dianggap null.
+      // Error lain (mis. API tidak tersedia) -> jatuh ke memori.
+      const msg = (e && e.message) || '';
+      if(!/not found|does not exist|no such/i.test(msg)){
+        console.warn('[storage] get gagal, pakai memori sementara:', e);
+        storageOK = false;
+      }
+    }
+  } else {
+    storageOK = false;
+  }
+  return Object.prototype.hasOwnProperty.call(memoryStore,key) ? memoryStore[key] : null;
+}
+
+async function storeSet(key, value, shared){
+  memoryStore[key] = value; // selalu simpan cadangan di memori
+  if(typeof window.storage !== 'undefined'){
+    try{
+      const r = await window.storage.set(key, value, shared);
+      if(r) return true;
+      console.warn('[storage] set mengembalikan hasil kosong, pakai memori sementara.');
+      storageOK = false;
+      return true;
+    }catch(e){
+      console.warn('[storage] set gagal, pakai memori sementara:', e);
+      storageOK = false;
+      return true;
+    }
+  }
+  storageOK = false;
+  return true;
+}
+
+async function getUser(username){
+  const raw = await storeGet('users:'+username, true);
+  if(!raw) return null;
+  try{ return JSON.parse(raw); }catch(e){ return null; }
+}
+async function saveUser(u){
+  return await storeSet('users:'+u.username, JSON.stringify(u), true);
+}
+async function ensureAdmin(){
+  const existing = await getUser('souly');
+  if(!existing){
+    await saveUser(newUser('souly','souly123'));
+  }
+}
+function newUser(username,password){
+  return {
+    username, password,
+    avatar: AVATARS[Math.floor(Math.random()*AVATARS.length)],
+    level:1, xp:0, coins:20, bulbs:1,
+    tttLevel:1, tttWins:0,
+    quizLevel:1, quizWins:0,
+    usedQuizIds: [],
+    aiUsesDate: todayStr(), aiUsesToday:0,
+    createdAt: Date.now()
+  };
+}
+
+let CURRENT = null; // in-memory session user (not persisted across reload by design)
+
+async function addRewards(coins, xp){
+  CURRENT.coins += coins;
+  CURRENT.xp += xp;
+  let leveledUp = false;
+  while(CURRENT.level < MAX_LEVEL && CURRENT.xp >= xpNeeded(CURRENT.level)){
+    CURRENT.xp -= xpNeeded(CURRENT.level);
+    CURRENT.level++;
+    leveledUp = true;
+  }
+  if(CURRENT.level >= MAX_LEVEL){ CURRENT.xp = Math.min(CURRENT.xp, xpNeeded(MAX_LEVEL)-1); }
+  await saveUser(CURRENT);
+  return leveledUp;
+}
+
+/* ===================== QUIZ BANK ===================== */
+const QUIZ_BANK = [
+  {id:1,d:1,q:"Ibu kota Indonesia adalah?",o:["Jakarta","Bandung","Surabaya","Medan"],a:0},
+  {id:2,d:1,q:"2 + 2 x 2 =",o:["8","6","4","2"],a:1},
+  {id:3,d:1,q:"Planet terdekat dengan matahari?",o:["Venus","Bumi","Merkurius","Mars"],a:2},
+  {id:4,d:1,q:"Warna bendera Indonesia?",o:["Merah-Putih","Merah-Biru","Putih-Biru","Kuning-Merah"],a:0},
+  {id:5,d:2,q:"Penemu lampu pijar?",o:["Newton","Edison","Einstein","Tesla"],a:1},
+  {id:6,d:2,q:"Ibu kota Jepang?",o:["Kyoto","Osaka","Tokyo","Nagoya"],a:2},
+  {id:7,d:2,q:"Hasil dari 12 x 12?",o:["144","124","134","154"],a:0},
+  {id:8,d:2,q:"Gas yang dibutuhkan manusia untuk bernapas?",o:["CO2","Oksigen","Nitrogen","Helium"],a:1},
+  {id:9,d:2,q:"Benua terbesar di dunia?",o:["Afrika","Eropa","Asia","Amerika"],a:2},
+  {id:10,d:2,q:"Bahasa pemrograman untuk web front-end?",o:["Python","JavaScript","C++","Java"],a:1},
+  {id:11,d:3,q:"Penulis novel 'Laskar Pelangi'?",o:["Andrea Hirata","Pramoedya","Tere Liye","Dee Lestari"],a:0},
+  {id:12,d:3,q:"Rumus kimia air?",o:["CO2","O2","H2O","NaCl"],a:2},
+  {id:13,d:3,q:"Negara dengan penduduk terbanyak di dunia?",o:["India","Cina","AS","Indonesia"],a:0},
+  {id:14,d:3,q:"1 abad = berapa tahun?",o:["10","100","1000","50"],a:1},
+  {id:15,d:3,q:"Mata uang Jepang?",o:["Won","Yuan","Yen","Ringgit"],a:2},
+  {id:16,d:4,q:"Siapa proklamator kemerdekaan Indonesia?",o:["Soekarno-Hatta","Soeharto","Sudirman","Habibie"],a:0},
+  {id:17,d:4,q:"Organ tubuh yang memompa darah?",o:["Paru-paru","Jantung","Ginjal","Hati"],a:1},
+  {id:18,d:4,q:"Akar kuadrat dari 144?",o:["11","13","12","14"],a:2},
+  {id:19,d:4,q:"Samudra terluas di dunia?",o:["Atlantik","Hindia","Pasifik","Arktik"],a:2},
+  {id:20,d:4,q:"Bahasa resmi PBB tidak termasuk?",o:["Inggris","Mandarin","Jerman","Arab"],a:2},
+];
+
+function pickQuizQuestion(){
+  let used = CURRENT.usedQuizIds || [];
+  let pool = QUIZ_BANK.filter(q => !used.includes(q.id));
+  if(pool.length === 0){ CURRENT.usedQuizIds = []; pool = QUIZ_BANK.slice(); }
+  const pick = pool[Math.floor(Math.random()*pool.length)];
+  return pick;
+}
+
+/* ===================== TIC TAC TOE AI ===================== */
+function tttWinner(b){
+  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for(const [a,b1,c] of lines){ if(b[a] && b[a]===b[b1] && b[a]===b[c]) return b[a]; }
+  if(b.every(x=>x)) return 'draw';
+  return null;
+}
+function minimax(b, isAI, depth){
+  const w = tttWinner(b);
+  if(w==='O') return {score: 10-depth};
+  if(w==='X') return {score: depth-10};
+  if(w==='draw') return {score:0};
+  const moves = [];
+  for(let i=0;i<9;i++){
+    if(!b[i]){
+      const nb = b.slice(); nb[i] = isAI ? 'O' : 'X';
+      const res = minimax(nb, !isAI, depth+1);
+      moves.push({idx:i, score:res.score});
+    }
+  }
+  if(isAI){
+    return moves.reduce((best,m)=> m.score>best.score?m:best, {score:-Infinity, idx:moves[0].idx});
+  } else {
+    return moves.reduce((best,m)=> m.score<best.score?m:best, {score:Infinity, idx:moves[0].idx});
+  }
+}
+function aiMove(board, level){
+  const empty = board.map((v,i)=>v?null:i).filter(v=>v!==null);
+  // chance of a random (weaker) move decreases as level rises
+  const randomChance = Math.max(0.05, 0.55 - level*0.05);
+  if(Math.random() < randomChance){
+    return empty[Math.floor(Math.random()*empty.length)];
+  }
+  const best = minimax(board.slice(), true, 0);
+  return best.idx;
+}
+
+/* ===================== AI CHAT (Anthropic API) ===================== */
+async function callAI(userText, history){
+  const messages = history.map(h => ({role: h.role, content: h.content}));
+  messages.push({role:'user', content: userText});
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      model:"claude-sonnet-4-6",
+      max_tokens:600,
+      system:"Kamu adalah asisten AI ramah di dalam aplikasi game bernama Souly Arena. Jawab singkat, jelas, dan gunakan Bahasa Indonesia kecuali diminta lain.",
+      messages
+    })
+  });
+  const data = await res.json();
+  const text = (data.content||[]).map(c=>c.text||'').join('\n').trim();
+  return text || "(tidak ada respons)";
+}
+
+/* ===================== RENDER APP ===================== */
+const appEl = document.getElementById('app');
+let VIEW = 'login';
+let chatHistory = [];
+
+function render(){
+  if(!CURRENT){ renderAuth(); return; }
+  renderShell();
+}
+
+async function boot(){
+  await ensureAdmin();
+  render();
+}
+
+/* ---------- AUTH ---------- */
+function renderAuth(){
+  appEl.innerHTML = `
+  <div class="center">
+    <div style="width:100%;max-width:360px;position:relative;">
+      <button class="theme-toggle" id="themeBtn" style="position:absolute;top:-6px;right:0;">${THEME==='dark'?'☀️':'🌙'}</button>
+      <div class="logo">💎</div>
+      <div class="brand">SOULY ARENA</div>
+      <div class="tagline">Main, kumpulkan XP, naik level.</div>
+      <div class="glass card">
+        <div id="authTitle" style="font-weight:800;font-size:18px;margin-bottom:14px;">Masuk</div>
+        <input id="u" placeholder="Username" autocomplete="username">
+        <input id="p" type="password" placeholder="Password" autocomplete="current-password">
+        <div class="err" id="authErr"></div>
+        <button class="btn-primary" id="authBtn">Masuk</button>
+        <div class="link" id="switchLink">Belum punya akun? Daftar</div>
+      </div>
+      <p style="text-align:center;margin-top:14px;">Data akun disimpan bersama (shared) di penyimpanan aplikasi ini — bisa diakses siapa pun yang memakai aplikasi ini.</p>
+      <p id="storageNote" style="text-align:center;color:var(--gold);"></p>
+    </div>
+  </div>`;
+  if(!storageOK){
+    document.getElementById('storageNote').textContent = 'Catatan: penyimpanan permanen tidak terdeteksi saat ini, jadi akun hanya tersimpan selama sesi ini berlangsung.';
+  }
+  let mode = 'login';
+  document.getElementById('themeBtn').onclick = toggleTheme;
+  const title = document.getElementById('authTitle');
+  const btn = document.getElementById('authBtn');
+  const switchLink = document.getElementById('switchLink');
+  const err = document.getElementById('authErr');
+
+  switchLink.onclick = ()=>{
+    mode = mode==='login' ? 'register' : 'login';
+    title.textContent = mode==='login' ? 'Masuk' : 'Daftar Akun';
+    btn.textContent = mode==='login' ? 'Masuk' : 'Daftar';
+    switchLink.textContent = mode==='login' ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Masuk';
+    err.textContent = '';
+  };
+
+  btn.onclick = async ()=>{
+    const username = document.getElementById('u').value.trim().toLowerCase();
+    const password = document.getElementById('p').value.trim();
+    err.textContent = '';
+    if(!username || !password){ err.textContent = 'Isi username dan password.'; return; }
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    try{
+      if(mode === 'register'){
+        const exist = await getUser(username);
+        if(exist){ err.textContent = 'Username sudah dipakai.'; btn.disabled=false; btn.textContent='Daftar'; return; }
+        const u = newUser(username, password);
+        const ok = await saveUser(u);
+        if(!ok){ err.textContent = 'Gagal menyimpan akun, coba lagi.'; btn.disabled=false; btn.textContent='Daftar'; return; }
+        CURRENT = u;
+        showToast('Akun berhasil dibuat!','ok');
+        render();
+      } else {
+        const u = await getUser(username);
+        if(!u){ err.textContent = 'Akun tidak ditemukan. Cek username, atau daftar dulu.'; btn.disabled=false; btn.textContent='Masuk'; return; }
+        if(u.password !== password){ err.textContent = 'Password salah.'; btn.disabled=false; btn.textContent='Masuk'; return; }
+        CURRENT = u;
+        resetAiDailyIfNeeded();
+        showToast('Selamat datang, '+u.username+'!','ok');
+        render();
+      }
+    }catch(e){
+      console.error(e);
+      err.textContent = 'Terjadi kesalahan: ' + (e && e.message ? e.message : 'tidak diketahui');
+      btn.disabled=false; btn.textContent = mode==='login'?'Masuk':'Daftar';
+    }
+  };
+}
+
+function resetAiDailyIfNeeded(){
+  if(CURRENT.aiUsesDate !== todayStr()){
+    CURRENT.aiUsesDate = todayStr();
+    CURRENT.aiUsesToday = 0;
+    saveUser(CURRENT);
+  }
+}
+
+/* ---------- SHELL ---------- */
+function renderShell(){
+  appEl.innerHTML = `
+    <div class="topbar glass" style="margin:10px 10px 0;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="avatar">${CURRENT.avatar}</div>
+        <div>
+          <div style="font-weight:800;font-size:14px;">${CURRENT.username}</div>
+          <div class="small">Level ${CURRENT.level}</div>
+        </div>
+      </div>
+      <div class="hstat">
+        <div class="pill glass-strong" id="coinPill">🪙 ${CURRENT.coins}</div>
+        <div class="pill glass-strong" id="bulbPill">💡 ${CURRENT.bulbs}</div>
+        <button class="theme-toggle" id="themeBtnShell">${THEME==='dark'?'☀️':'🌙'}</button>
+      </div>
+    </div>
+    <div id="content" class="screen"></div>
+    <div class="bottomnav glass-strong">
+      <button class="navbtn" data-v="home"><span class="ni">🏠</span>Home</button>
+      <button class="navbtn" data-v="ttt"><span class="ni">❌</span>TTT</button>
+      <button class="navbtn" data-v="quiz"><span class="ni">🧠</span>Quiz</button>
+      <button class="navbtn" data-v="ai"><span class="ni">🤖</span>AI</button>
+      <button class="navbtn" data-v="shop"><span class="ni">🛍️</span>Shop</button>
+      <button class="navbtn" data-v="profile"><span class="ni">👤</span>Profil</button>
+    </div>
+  `;
+  document.querySelectorAll('.navbtn').forEach(b=>{
+    b.onclick = ()=>{ VIEW = b.dataset.v; renderContent(); };
+  });
+  document.getElementById('themeBtnShell').onclick = toggleTheme;
+  renderContent();
+}
+
+function setActiveNav(){
+  document.querySelectorAll('.navbtn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.v===VIEW);
+  });
+}
+
+function renderContent(){
+  setActiveNav();
+  const c = document.getElementById('content');
+  if(VIEW==='home') return renderHome(c);
+  if(VIEW==='ttt') return renderTTT(c);
+  if(VIEW==='quiz') return renderQuiz(c);
+  if(VIEW==='ai') return renderAI(c);
+  if(VIEW==='shop') return renderShop(c);
+  if(VIEW==='profile') return renderProfile(c);
+}
+
+/* ---------- HOME ---------- */
+function renderHome(c){
+  const need = xpNeeded(CURRENT.level);
+  const pct = CURRENT.level>=MAX_LEVEL ? 100 : Math.min(100, Math.round(CURRENT.xp/need*100));
+  c.innerHTML = `
+    <div class="glass card">
+      <div class="row"><h3>Level ${CURRENT.level}</h3><span class="small">${CURRENT.level>=MAX_LEVEL?'MAX':(CURRENT.xp+'/'+need+' XP')}</span></div>
+      <div class="xpbar-track"><div class="xpbar-fill" style="width:${pct}%"></div></div>
+      <p style="margin-top:6px;">Menangkan game untuk naik level hingga 99.</p>
+    </div>
+    <div class="grid2">
+      <div class="glass menu-card" id="goTtt">
+        <div class="ico">❌⭕</div>
+        <div style="font-weight:700;">Tic-Tac-Toe</div>
+        <div class="lvl">Level game: ${CURRENT.tttLevel}</div>
+      </div>
+      <div class="glass menu-card" id="goQuiz">
+        <div class="ico">🧠</div>
+        <div style="font-weight:700;">Quiz</div>
+        <div class="lvl">Level game: ${CURRENT.quizLevel}</div>
+      </div>
+      <div class="glass menu-card" id="goAi">
+        <div class="ico">🤖</div>
+        <div style="font-weight:700;">Chat AI</div>
+        <div class="lvl">${aiRemaining()} sisa hari ini</div>
+      </div>
+      <div class="glass menu-card" id="goShop">
+        <div class="ico">💡</div>
+        <div style="font-weight:700;">Beli Idea</div>
+        <div class="lvl">${BULB_COST} koin / lampu</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('goTtt').onclick = ()=>{VIEW='ttt';renderContent();};
+  document.getElementById('goQuiz').onclick = ()=>{VIEW='quiz';renderContent();};
+  document.getElementById('goAi').onclick = ()=>{VIEW='ai';renderContent();};
+  document.getElementById('goShop').onclick = ()=>{VIEW='shop';renderContent();};
+}
+
+/* ---------- PROFILE ---------- */
+function renderProfile(c){
+  c.innerHTML = `
+    <div class="glass card" style="text-align:center;">
+      <div style="font-size:52px;">${CURRENT.avatar}</div>
+      <h2>${CURRENT.username}</h2>
+      <p>Bergabung ${new Date(CURRENT.createdAt).toLocaleDateString('id-ID')}</p>
+    </div>
+    <div class="glass card">
+      <div class="row"><span>Level</span><b>${CURRENT.level} / ${MAX_LEVEL}</b></div>
+      <div class="row"><span>XP</span><b>${CURRENT.xp} / ${xpNeeded(CURRENT.level)}</b></div>
+      <div class="row"><span>Koin 🪙</span><b>${CURRENT.coins}</b></div>
+      <div class="row"><span>Lampu Idea 💡</span><b>${CURRENT.bulbs}</b></div>
+      <div class="row"><span>Level Tic-Tac-Toe</span><b>${CURRENT.tttLevel} (${CURRENT.tttWins} menang)</b></div>
+      <div class="row"><span>Level Quiz</span><b>${CURRENT.quizLevel} (${CURRENT.quizWins} menang)</b></div>
+    </div>
+    <div class="glass card">
+      <h3>Pilih Avatar</h3>
+      <div class="emoji-pick" id="avPick">
+        ${AVATARS.map(a=>`<span data-a="${a}" class="${a===CURRENT.avatar?'sel':''}">${a}</span>`).join('')}
+      </div>
+    </div>
+    <button class="btn-ghost" id="logoutBtn">Keluar</button>
+  `;
+  document.getElementById('avPick').querySelectorAll('span').forEach(s=>{
+    s.onclick = async ()=>{
+      CURRENT.avatar = s.dataset.a;
+      await saveUser(CURRENT);
+      renderShell();
+      VIEW='profile'; renderContent();
+    };
+  });
+  document.getElementById('logoutBtn').onclick = ()=>{
+    CURRENT = null; VIEW='login'; chatHistory=[]; render();
+  };
+}
+
+/* ---------- TIC TAC TOE ---------- */
+let tttBoard, tttTurn, tttOver;
+function newTttGame(){
+  tttBoard = Array(9).fill(null);
+  tttTurn = 'X'; tttOver = false;
+}
+function renderTTT(c){
+  if(!tttBoard) newTttGame();
+  c.innerHTML = `
+    <div class="glass card">
+      <div class="row"><h3>Tic-Tac-Toe</h3><span class="small">Level ${CURRENT.tttLevel}</span></div>
+      <p>Kamu (X) vs AI (O). Menang = XP + koin, makin tinggi level makin sulit & makin besar hadiah.</p>
+      <div class="board" id="board"></div>
+      <div id="tttStatus" class="row"><span class="small" id="tttMsg">Giliranmu</span><button class="btn-small btn-ghost" id="resetTtt">Main Lagi</button></div>
+    </div>
+  `;
+  drawBoard();
+  document.getElementById('resetTtt').onclick = ()=>{ newTttGame(); drawBoard(); };
+}
+function drawBoard(){
+  const b = document.getElementById('board');
+  if(!b) return;
+  b.innerHTML = tttBoard.map((v,i)=>`<div class="cell ${v==='X'?'x':v==='O'?'o':''}" data-i="${i}">${v||''}</div>`).join('');
+  b.querySelectorAll('.cell').forEach(cell=>{
+    cell.onclick = ()=> onCellClick(parseInt(cell.dataset.i));
+  });
+}
+async function onCellClick(i){
+  if(tttOver || tttBoard[i] || tttTurn!=='X') return;
+  tttBoard[i] = 'X';
+  drawBoard();
+  let w = tttWinner(tttBoard);
+  if(w){ return finishTtt(w); }
+  tttTurn = 'O';
+  document.getElementById('tttMsg').textContent = 'AI berpikir...';
+  setTimeout(async ()=>{
+    const move = aiMove(tttBoard, CURRENT.tttLevel);
+    tttBoard[move] = 'O';
+    drawBoard();
+    w = tttWinner(tttBoard);
+    if(w){ return finishTtt(w); }
+    tttTurn = 'X';
+    document.getElementById('tttMsg').textContent = 'Giliranmu';
+  }, 450);
+}
+async function finishTtt(w){
+  tttOver = true;
+  const msgEl = document.getElementById('tttMsg');
+  if(w==='X'){
+    const xpGain = 15 + CURRENT.tttLevel*3;
+    const coinGain = 10 + CURRENT.tttLevel*2;
+    CURRENT.tttWins++;
+    if(CURRENT.tttWins % 3 === 0) CURRENT.tttLevel = Math.min(CURRENT.tttLevel+1, 50);
+    const leveled = await addRewards(coinGain, xpGain);
+    msgEl.textContent = `Menang! +${xpGain} XP, +${coinGain} koin`;
+    showToast(`Menang! +${xpGain} XP, +${coinGain} 🪙`, 'ok');
+    if(leveled) showToast(`Naik ke Level ${CURRENT.level}!`, 'gold');
+    refreshTopbar();
+  } else if(w==='O'){
+    msgEl.textContent = 'AI menang. Coba lagi!';
+    await saveUser(CURRENT);
+  } else {
+    msgEl.textContent = 'Seri!';
+    await addRewards(2, 5);
+    refreshTopbar();
+  }
+}
+
+/* ---------- QUIZ ---------- */
+let quizQ = null, quizStreak = 0, quizAnswered = false;
+function renderQuiz(c){
+  quizQ = pickQuizQuestion();
+  quizAnswered = false;
+  c.innerHTML = `
+    <div class="glass card">
+      <div class="row"><h3>Quiz</h3><span class="small">Level ${CURRENT.quizLevel} · Beruntun: ${quizStreak}</span></div>
+      <p style="font-size:16px;color:var(--text);font-weight:600;margin-top:10px;">${quizQ.q}</p>
+      <div id="opts" style="margin-top:12px;"></div>
+    </div>
+  `;
+  const opts = document.getElementById('opts');
+  quizQ.o.forEach((optText, idx)=>{
+    const b = document.createElement('button');
+    b.className = 'qopt';
+    b.textContent = optText;
+    b.onclick = ()=> answerQuiz(idx, b, opts);
+    opts.appendChild(b);
+  });
+}
+async function answerQuiz(idx, btn, opts){
+  if(quizAnswered) return;
+  quizAnswered = true;
+  CURRENT.usedQuizIds = CURRENT.usedQuizIds || [];
+  CURRENT.usedQuizIds.push(quizQ.id);
+  const correct = idx === quizQ.a;
+  Array.from(opts.children).forEach((el,i)=>{
+    if(i===quizQ.a) el.classList.add('correct');
+    else if(i===idx) el.classList.add('wrong');
+    el.disabled = true;
+  });
+  if(correct){
+    quizStreak++;
+    const xpGain = 8 + quizQ.d*4 + CURRENT.quizLevel;
+    const coinGain = 4 + quizQ.d*2;
+    CURRENT.quizWins++;
+    if(CURRENT.quizWins % 5 === 0) CURRENT.quizLevel = Math.min(CURRENT.quizLevel+1, 50);
+    const leveled = await addRewards(coinGain, xpGain);
+    showToast(`Benar! +${xpGain} XP, +${coinGain} 🪙`, 'ok');
+    if(leveled) showToast(`Naik ke Level ${CURRENT.level}!`, 'gold');
+  } else {
+    quizStreak = 0;
+    await saveUser(CURRENT);
+    showToast('Kurang tepat, coba lagi ya', 'err');
+  }
+  refreshTopbar();
+  setTimeout(()=>{ if(VIEW==='quiz') renderContent(); }, 1100);
+}
+
+/* ---------- AI CHAT ---------- */
+function aiRemaining(){
+  resetAiDailyIfNeeded();
+  return Math.max(0, (AI_DAILY_BASE + CURRENT.bulbs*0) - CURRENT.aiUsesToday) + 0;
+}
+function aiLimitTotal(){ return AI_DAILY_BASE; }
+function renderAI(c){
+  resetAiDailyIfNeeded();
+  const remaining = Math.max(0, AI_DAILY_BASE - CURRENT.aiUsesToday);
+  c.innerHTML = `
+    <div class="glass card">
+      <div class="row"><h3>Chat AI</h3><span class="small">${remaining} pesan gratis hari ini</span></div>
+      <div class="chatlog" id="chatlog"></div>
+      <div class="chatrow">
+        <input id="chatInput" placeholder="Tulis pesan..." />
+        <button class="btn-primary" style="width:auto;" id="sendBtn">Kirim</button>
+      </div>
+      <p style="margin-top:8px;">Kehabisan limit? Beli lampu 💡 di Shop untuk pesan tambahan.</p>
+    </div>
+  `;
+  const log = document.getElementById('chatlog');
+  log.innerHTML = chatHistory.map(m=>`<div class="bubble ${m.role==='user'?'me':'ai'}">${escapeHtml(m.content)}</div>`).join('');
+  log.scrollTop = log.scrollHeight;
+  const input = document.getElementById('chatInput');
+  const send = document.getElementById('sendBtn');
+  send.onclick = ()=> sendChat(input, log);
+  input.onkeydown = (e)=>{ if(e.key==='Enter') sendChat(input, log); };
+}
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+async function sendChat(input, log){
+  const text = input.value.trim();
+  if(!text) return;
+  resetAiDailyIfNeeded();
+  const remaining = Math.max(0, AI_DAILY_BASE - CURRENT.aiUsesToday);
+  if(remaining <= 0 && CURRENT.bulbs <= 0){
+    showToast('Limit AI habis. Beli lampu 💡 di Shop!', 'err');
+    return;
+  }
+  input.value='';
+  chatHistory.push({role:'user', content:text});
+  log.innerHTML += `<div class="bubble me">${escapeHtml(text)}</div>`;
+  log.scrollTop = log.scrollHeight;
+  const typingEl = document.createElement('div');
+  typingEl.className = 'bubble ai';
+  typingEl.innerHTML = '<span class="spinner"></span>';
+  log.appendChild(typingEl);
+  log.scrollTop = log.scrollHeight;
+
+  if(remaining > 0){ CURRENT.aiUsesToday++; }
+  else { CURRENT.bulbs--; }
+  await saveUser(CURRENT);
+  refreshTopbar();
+  if(VIEW==='ai'){
+    const remainEl = document.querySelector('#content .small');
+    if(remainEl) remainEl.textContent = `${Math.max(0,AI_DAILY_BASE-CURRENT.aiUsesToday)} pesan gratis hari ini`;
+  }
+
+  try{
+    const reply = await callAI(text, chatHistory.slice(0,-1));
+    chatHistory.push({role:'assistant', content:reply});
+    typingEl.textContent = reply;
+  }catch(e){
+    typingEl.textContent = 'Maaf, terjadi kendala menghubungi AI. Coba lagi.';
+  }
+  log.scrollTop = log.scrollHeight;
+}
+
+/* ---------- SHOP ---------- */
+function renderShop(c){
+  c.innerHTML = `
+    <div class="glass card">
+      <h3>Shop</h3>
+      <p>Gunakan koin hasil menang game untuk membeli item.</p>
+    </div>
+    <div class="glass shopitem">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div style="font-size:28px;">💡</div>
+        <div>
+          <div style="font-weight:700;">Idea Bulb</div>
+          <div class="small">+1 pesan AI ekstra</div>
+        </div>
+      </div>
+      <button class="btn-primary" style="width:auto;" id="buyBulb">🪙 ${BULB_COST}</button>
+    </div>
+    <div class="glass card">
+      <div class="row"><span>Koin kamu</span><b>🪙 ${CURRENT.coins}</b></div>
+      <div class="row"><span>Lampu dimiliki</span><b>💡 ${CURRENT.bulbs}</b></div>
+    </div>
+  `;
+  document.getElementById('buyBulb').onclick = async ()=>{
+    if(CURRENT.coins < BULB_COST){ showToast('Koin tidak cukup!', 'err'); return; }
+    CURRENT.coins -= BULB_COST;
+    CURRENT.bulbs += 1;
+    await saveUser(CURRENT);
+    showToast('Berhasil membeli 1 lampu 💡', 'gold');
+    refreshTopbar();
+    renderShop(document.getElementById('content'));
+  };
+}
+
+function refreshTopbar(){
+  if(!CURRENT) return;
+  const coinPill = document.getElementById('coinPill');
+  const bulbPill = document.getElementById('bulbPill');
+  if(coinPill){
+    coinPill.textContent = `🪙 ${CURRENT.coins}`;
+    coinPill.classList.remove('bump'); void coinPill.offsetWidth; coinPill.classList.add('bump');
+  }
+  if(bulbPill){
+    bulbPill.textContent = `💡 ${CURRENT.bulbs}`;
+    bulbPill.classList.remove('bump'); void bulbPill.offsetWidth; bulbPill.classList.add('bump');
+  }
+  const topLvl = document.querySelector('.topbar .small');
+  if(topLvl) topLvl.textContent = `Level ${CURRENT.level}`;
+}
+
+boot();
+</script>
+</body>
+</html>
